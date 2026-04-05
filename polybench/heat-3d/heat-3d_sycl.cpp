@@ -6,7 +6,7 @@ void kernel_heat_3d_sycl(buffer<DATA_TYPE, 3> &buf_A, buffer<DATA_TYPE, 3> &buf_
     Q.submit([&](handler &h) {
       auto A = buf_A.get_access<access::mode::read>(h);
       auto B = buf_B.get_access<access::mode::read_write>(h);
-      h.parallel_for(range<3>(HEAT_3D_N, HEAT_3D_N, HEAT_3D_N), [=](item<3> item) {
+      h.parallel_for<class Heat3DStepBKernel>(range<3>(HEAT_3D_N, HEAT_3D_N, HEAT_3D_N), [=](item<3> item) {
         size_t i = item[0];
         size_t j = item[1];
         size_t k = item[2];
@@ -21,7 +21,7 @@ void kernel_heat_3d_sycl(buffer<DATA_TYPE, 3> &buf_A, buffer<DATA_TYPE, 3> &buf_
     Q.submit([&](handler &h) {
       auto A = buf_A.get_access<access::mode::read_write>(h);
       auto B = buf_B.get_access<access::mode::read>(h);
-      h.parallel_for(range<3>(HEAT_3D_N, HEAT_3D_N, HEAT_3D_N), [=](item<3> item) {
+      h.parallel_for<class Heat3DStepAKernel>(range<3>(HEAT_3D_N, HEAT_3D_N, HEAT_3D_N), [=](item<3> item) {
         size_t i = item[0];
         size_t j = item[1];
         size_t k = item[2];

@@ -32,10 +32,10 @@ void covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean)
 
 void bench_covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean)
 {
-  for (int i = 0; i < WARMUP_REPS; i++)
+  for (int i = 0; i < 1; i++)
     kernel_covariance_serial(data, symmat, mean);
 
   TIMEIT({
     kernel_covariance_serial(data, symmat, mean);
-  }, BENCH_REPS, "\n", "serial");
+  }, 1, "\n", "serial");
 }

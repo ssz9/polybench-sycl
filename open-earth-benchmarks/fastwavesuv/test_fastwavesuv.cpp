@@ -14,6 +14,14 @@ extern void fastwavesuv_sycl(
 extern void bench_fastwavesuv_sycl(
     DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
     DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
+#ifdef PLF_SW
+extern void fastwavesuv_sycl_sw(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
+    DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
+extern void bench_fastwavesuv_sycl_sw(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
+    DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
+#endif
 
 namespace {
 
@@ -104,6 +112,18 @@ bool check_fastwavesuv()
   std::printf("compare uout (sycl-naive): %s\n", u_ok ? "PASS" : "FAIL");
   std::printf("compare vout (sycl-naive): %s\n", v_ok ? "PASS" : "FAIL");
 
+#ifdef PLF_SW
+  init_fastwavesuv(out);
+  fastwavesuv_sycl_sw(out.uout, out.vout, out.uin, out.vin, out.utens, out.vtens, out.wgtfac, out.ppuv, out.hhl, out.rho, out.fx, out.ppgk, out.ppgc,
+                      out.ppgu, out.ppgv, edadlat, dt);
+  bool u_sw_ok = compare_array(gold.uout, out.uout, size_3d);
+  bool v_sw_ok = compare_array(gold.vout, out.vout, size_3d);
+  std::printf("compare uout (sycl-sw): %s\n", u_sw_ok ? "PASS" : "FAIL");
+  std::printf("compare vout (sycl-sw): %s\n", v_sw_ok ? "PASS" : "FAIL");
+  u_ok = u_ok && u_sw_ok;
+  v_ok = v_ok && v_sw_ok;
+#endif
+
   free_data(gold);
   free_data(out);
   return u_ok && v_ok;
@@ -122,6 +142,11 @@ void bench_fastwavesuv()
   init_fastwavesuv(d);
   bench_fastwavesuv_sycl(d.uout, d.vout, d.uin, d.vin, d.utens, d.vtens, d.wgtfac, d.ppuv, d.hhl, d.rho, d.fx, d.ppgk, d.ppgc, d.ppgu, d.ppgv,
                          edadlat, dt);
+#ifdef PLF_SW
+  init_fastwavesuv(d);
+  bench_fastwavesuv_sycl_sw(d.uout, d.vout, d.uin, d.vin, d.utens, d.vtens, d.wgtfac, d.ppuv, d.hhl, d.rho, d.fx, d.ppgk, d.ppgc, d.ppgu, d.ppgv,
+                            edadlat, dt);
+#endif
 
   free_data(d);
 }

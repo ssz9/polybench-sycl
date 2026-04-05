@@ -11,7 +11,7 @@ void kernel_fastwavesuv_sycl(
     auto ppuv = ppuv_buf.get_access<access::mode::read>(h);
     auto ppgk = ppgk_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE + 1, DOMAIN_SIZE + 1, DOMAIN_HEIGHT + 1), [=](id<3> idx) {
+    h.parallel_for<class FastwavesuvPpgkKernel>(range<3>(DOMAIN_SIZE + 1, DOMAIN_SIZE + 1, DOMAIN_HEIGHT + 1), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       ppgk[IDXSY(i, j, k)] = wgtfac[IDXSY(i, j, k)] * ppuv[IDXSY(i, j, k)] +
                              (DATA_TYPE(1.0) - wgtfac[IDXSY(i, j, k)]) * ppuv[IDXSY(i, j, k - 1)];
@@ -22,7 +22,7 @@ void kernel_fastwavesuv_sycl(
     auto ppgk = ppgk_buf.get_access<access::mode::read>(h);
     auto ppgc = ppgc_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE + 1, DOMAIN_SIZE + 1, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class FastwavesuvPpgcKernel>(range<3>(DOMAIN_SIZE + 1, DOMAIN_SIZE + 1, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       ppgc[IDXSY(i, j, k)] = ppgk[IDXSY(i, j, k + 1)] - ppgk[IDXSY(i, j, k)];
     });
@@ -43,7 +43,7 @@ void kernel_fastwavesuv_sycl(
     auto uout = uout_buf.get_access<access::mode::write>(h);
     auto vout = vout_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class FastwavesuvUpdateKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       ppgu[IDXSY(i, j, k)] = (ppuv[IDXSY(i + 1, j, k)] - ppuv[IDXSY(i, j, k)]) +
                              (ppgc[IDXSY(i + 1, j, k)] + ppgc[IDXSY(i, j, k)]) * DATA_TYPE(0.5) *

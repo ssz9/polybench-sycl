@@ -60,10 +60,10 @@ void bench_fastwavesuv_serial(
     const DATA_TYPE *wgtfac, const DATA_TYPE *ppuv, const DATA_TYPE *hhl, const DATA_TYPE *rho, const DATA_TYPE *fx,
     DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, const DATA_TYPE edadlat, const DATA_TYPE dt)
 {
-  for (int i = 0; i < WARMUP_REPS; ++i)
+  for (int i = 0; i < 1; ++i)
     kernel_fastwavesuv_serial(uout, vout, uin, vin, utens, vtens, wgtfac, ppuv, hhl, rho, fx, ppgk, ppgc, ppgu, ppgv, edadlat, dt);
 
   TIMEIT({
     kernel_fastwavesuv_serial(uout, vout, uin, vin, utens, vtens, wgtfac, ppuv, hhl, rho, fx, ppgk, ppgc, ppgu, ppgv, edadlat, dt);
-  }, BENCH_REPS, "\n", "serial");
+  }, 1, "\n", "serial");
 }

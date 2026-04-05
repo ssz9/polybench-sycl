@@ -16,6 +16,16 @@ extern void bench_hadvuv_sycl(
     DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *acrlat0, DATA_TYPE *acrlat1, DATA_TYPE *tgrlatda0, DATA_TYPE *tgrlatda1,
     DATA_TYPE *uatupos, DATA_TYPE *vatupos, DATA_TYPE *uatvpos, DATA_TYPE *vatvpos, DATA_TYPE *uavg, DATA_TYPE *vavg, DATA_TYPE *ures, DATA_TYPE *vres,
     DATA_TYPE eddlat, DATA_TYPE eddlon);
+#ifdef PLF_SW
+extern void hadvuv_sycl_sw(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *acrlat0, DATA_TYPE *acrlat1, DATA_TYPE *tgrlatda0, DATA_TYPE *tgrlatda1,
+    DATA_TYPE *uatupos, DATA_TYPE *vatupos, DATA_TYPE *uatvpos, DATA_TYPE *vatvpos, DATA_TYPE *uavg, DATA_TYPE *vavg, DATA_TYPE *ures, DATA_TYPE *vres,
+    DATA_TYPE eddlat, DATA_TYPE eddlon);
+extern void bench_hadvuv_sycl_sw(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *acrlat0, DATA_TYPE *acrlat1, DATA_TYPE *tgrlatda0, DATA_TYPE *tgrlatda1,
+    DATA_TYPE *uatupos, DATA_TYPE *vatupos, DATA_TYPE *uatvpos, DATA_TYPE *vatvpos, DATA_TYPE *uavg, DATA_TYPE *vavg, DATA_TYPE *ures, DATA_TYPE *vres,
+    DATA_TYPE eddlat, DATA_TYPE eddlon);
+#endif
 
 namespace {
 
@@ -109,6 +119,18 @@ bool check_hadvuv()
   std::printf("compare uout (sycl-naive): %s\n", u_ok ? "PASS" : "FAIL");
   std::printf("compare vout (sycl-naive): %s\n", v_ok ? "PASS" : "FAIL");
 
+#ifdef PLF_SW
+  init_hadvuv(out);
+  hadvuv_sycl_sw(out.uout, out.vout, out.uin, out.vin, out.acrlat0, out.acrlat1, out.tgrlatda0, out.tgrlatda1, out.uatupos, out.vatupos,
+                 out.uatvpos, out.vatvpos, out.uavg, out.vavg, out.ures, out.vres, eddlat, eddlon);
+  bool u_sw_ok = compare_array(gold.uout, out.uout, size_3d);
+  bool v_sw_ok = compare_array(gold.vout, out.vout, size_3d);
+  std::printf("compare uout (sycl-sw): %s\n", u_sw_ok ? "PASS" : "FAIL");
+  std::printf("compare vout (sycl-sw): %s\n", v_sw_ok ? "PASS" : "FAIL");
+  u_ok = u_ok && u_sw_ok;
+  v_ok = v_ok && v_sw_ok;
+#endif
+
   free_data(gold);
   free_data(out);
   return u_ok && v_ok;
@@ -127,6 +149,11 @@ void bench_hadvuv()
   init_hadvuv(d);
   bench_hadvuv_sycl(d.uout, d.vout, d.uin, d.vin, d.acrlat0, d.acrlat1, d.tgrlatda0, d.tgrlatda1, d.uatupos, d.vatupos, d.uatvpos, d.vatvpos, d.uavg,
                     d.vavg, d.ures, d.vres, eddlat, eddlon);
+#ifdef PLF_SW
+  init_hadvuv(d);
+  bench_hadvuv_sycl_sw(d.uout, d.vout, d.uin, d.vin, d.acrlat0, d.acrlat1, d.tgrlatda0, d.tgrlatda1, d.uatupos, d.vatupos, d.uatvpos, d.vatvpos, d.uavg,
+                       d.vavg, d.ures, d.vres, eddlat, eddlon);
+#endif
 
   free_data(d);
 }

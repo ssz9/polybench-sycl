@@ -90,12 +90,12 @@ void bench_hadvuv_serial(
     const DATA_TYPE *tgrlatda0, const DATA_TYPE *tgrlatda1, DATA_TYPE *uatupos, DATA_TYPE *vatupos, DATA_TYPE *uatvpos, DATA_TYPE *vatvpos,
     DATA_TYPE *uavg, DATA_TYPE *vavg, DATA_TYPE *ures, DATA_TYPE *vres, DATA_TYPE eddlat, DATA_TYPE eddlon)
 {
-  for (int i = 0; i < WARMUP_REPS; ++i)
+  for (int i = 0; i < 1; ++i)
     kernel_hadvuv_serial(uout, vout, uin, vin, acrlat0, acrlat1, tgrlatda0, tgrlatda1, uatupos, vatupos, uatvpos, vatvpos, uavg, vavg, ures, vres,
                          eddlat, eddlon);
 
   TIMEIT({
     kernel_hadvuv_serial(uout, vout, uin, vin, acrlat0, acrlat1, tgrlatda0, tgrlatda1, uatupos, vatupos, uatvpos, vatvpos, uavg, vavg, ures, vres,
                          eddlat, eddlon);
-  }, BENCH_REPS, "\n", "serial");
+  }, 1, "\n", "serial");
 }

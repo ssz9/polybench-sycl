@@ -1,6 +1,5 @@
 #include "correlation.h"
 
-
 void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> &corr_buf, buffer<DATA_TYPE,1> &mean_buf, buffer<DATA_TYPE,1> &stddev_buf, queue &Q)
 {
   DATA_TYPE eps = 0.1;
@@ -8,7 +7,7 @@ void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> 
   Q.submit([&](handler &h){
     auto data = data_buf.get_access<access::mode::read>(h);
     auto mean = mean_buf.get_access<access::mode::write>(h);
-    h.parallel_for({_PB_M}, [=](id<1> j){
+    h.parallel_for<class CorrelationMeanKernel>({_PB_M}, [=](id<1> j){
       mean[j] = 0.0;
       for (int i = 0; i < _PB_N; i++)
         mean[j] += data[i][j];
@@ -20,7 +19,7 @@ void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> 
     auto data = data_buf.get_access<access::mode::read>(h);
     auto mean = mean_buf.get_access<access::mode::read>(h);
     auto stddev = stddev_buf.get_access<access::mode::write>(h);
-    h.parallel_for({_PB_M}, [=](id<1> j){
+    h.parallel_for<class CorrelationStddevKernel>({_PB_M}, [=](id<1> j){
       stddev[j] = 0.0;
       for (int i = 0; i < _PB_N; i++)
         stddev[j] += (data[i][j] - mean[j]) * (data[i][j] - mean[j]);
@@ -35,7 +34,7 @@ void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> 
     auto data = data_buf.get_access<access::mode::read_write>(h);
     auto mean = mean_buf.get_access<access::mode::read>(h);
     auto stddev = stddev_buf.get_access<access::mode::read>(h);
-    h.parallel_for({_PB_N, _PB_M}, [=](id<2> idx){
+    h.parallel_for<class CorrelationNormalizeKernel>({_PB_N, _PB_M}, [=](id<2> idx){
       int i = idx[0];
       int j = idx[1];
       data[i][j] -= mean[j];
@@ -46,7 +45,7 @@ void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> 
   Q.submit([&](handler &h){
     auto data = data_buf.get_access<access::mode::read>(h);
     auto corr = corr_buf.get_access<access::mode::write>(h);
-    h.parallel_for({_PB_M, _PB_M}, [=](id<2> idx){
+    h.parallel_for<class CorrelationCorrKernel>({_PB_M, _PB_M}, [=](id<2> idx){
       int i = idx[0];
       int j = idx[1];
       if (i == j) {
@@ -89,6 +88,6 @@ void bench_correlation_sycl(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, D
     // timing
     TIMEIT({
       kernel_correlation_sycl(data_buf, corr_buf, mean_buf, stddev_buf, Q);
-    }, 10, "\n", "sycl-naive");
+    }, BENCH_REPS, "\n", "sycl-naive");
   }
 }

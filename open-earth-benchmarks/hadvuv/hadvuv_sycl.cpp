@@ -13,7 +13,7 @@ void kernel_hadvuv_sycl(
     auto uatupos = uatupos_buf.get_access<access::mode::write>(h);
     auto vatupos = vatupos_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUatuposKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       uatupos[IDXSY(i, j, k)] = (DATA_TYPE(1.0) / DATA_TYPE(3.0)) * (uin[IDXSY(i - 1, j, k)] + uin[IDXSY(i, j, k)] + uin[IDXSY(i + 1, j, k)]);
       vatupos[IDXSY(i, j, k)] = DATA_TYPE(0.25) * (vin[IDXSY(i + 1, j, k)] + vin[IDXSY(i + 1, j - 1, k)] + vin[IDXSY(i, j, k)] + vin[IDXSY(i, j - 1, k)]);
@@ -27,7 +27,7 @@ void kernel_hadvuv_sycl(
     auto uavg = uavg_buf.get_access<access::mode::write>(h);
     auto vavg = vavg_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUavg0Kernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       uavg[IDXSY(i, j, k)] = acrlat0[IDX_1D(j)] * uatupos[IDXSY(i, j, k)];
       vavg[IDXSY(i, j, k)] = EARTH_RADIUS_RECIP * vatupos[IDXSY(i, j, k)];
@@ -40,7 +40,7 @@ void kernel_hadvuv_sycl(
     auto vavg = vavg_buf.get_access<access::mode::read>(h);
     auto ures = ures_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUresKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       ures[IDXSY(i, j, k)] = advection_driver_sycl(uin, i, j, k, uavg[IDXSY(i, j, k)], vavg[IDXSY(i, j, k)], eddlat, eddlon);
     });
@@ -53,7 +53,7 @@ void kernel_hadvuv_sycl(
     auto tgrlatda0 = tgrlatda0_buf.get_access<access::mode::read>(h);
     auto uout = uout_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUoutKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       uout[IDXSY(i, j, k)] = ures[IDXSY(i, j, k)] + tgrlatda0[IDX_1D(j)] * uin[IDXSY(i, j, k)] * vatupos[IDXSY(i, j, k)];
     });
@@ -65,7 +65,7 @@ void kernel_hadvuv_sycl(
     auto uatvpos = uatvpos_buf.get_access<access::mode::write>(h);
     auto vatvpos = vatvpos_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUatvposKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       uatvpos[IDXSY(i, j, k)] = DATA_TYPE(0.25) * (uin[IDXSY(i - 1, j, k)] + uin[IDXSY(i, j, k)] + uin[IDXSY(i, j + 1, k)] + uin[IDXSY(i - 1, j + 1, k)]);
       vatvpos[IDXSY(i, j, k)] = (DATA_TYPE(1.0) / DATA_TYPE(3.0)) * (vin[IDXSY(i, j - 1, k)] + vin[IDXSY(i, j, k)] + vin[IDXSY(i, j + 1, k)]);
@@ -79,7 +79,7 @@ void kernel_hadvuv_sycl(
     auto uavg = uavg_buf.get_access<access::mode::write>(h);
     auto vavg = vavg_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvUavg1Kernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       uavg[IDXSY(i, j, k)] = acrlat1[IDX_1D(j)] * uatvpos[IDXSY(i, j, k)];
       vavg[IDXSY(i, j, k)] = EARTH_RADIUS_RECIP * vatvpos[IDXSY(i, j, k)];
@@ -92,7 +92,7 @@ void kernel_hadvuv_sycl(
     auto vavg = vavg_buf.get_access<access::mode::read>(h);
     auto vres = vres_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvVresKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       vres[IDXSY(i, j, k)] = advection_driver_sycl(vin, i, j, k, uavg[IDXSY(i, j, k)], vavg[IDXSY(i, j, k)], eddlat, eddlon);
     });
@@ -104,7 +104,7 @@ void kernel_hadvuv_sycl(
     auto tgrlatda1 = tgrlatda1_buf.get_access<access::mode::read>(h);
     auto vout = vout_buf.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
+    h.parallel_for<class HadvuvVoutKernel>(range<3>(DOMAIN_SIZE, DOMAIN_SIZE, DOMAIN_HEIGHT), [=](id<3> idx) {
       ssize_t i = idx[0], j = idx[1], k = idx[2];
       vout[IDXSY(i, j, k)] = vres[IDXSY(i, j, k)] - tgrlatda1[IDX_1D(j)] * uatvpos[IDXSY(i, j, k)] * uatvpos[IDXSY(i, j, k)];
     });

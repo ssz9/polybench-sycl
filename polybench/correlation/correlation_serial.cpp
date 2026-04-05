@@ -48,11 +48,11 @@ void correlation_serial(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_
 void bench_correlation_serial(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev)
 {
   // warmup
-  for(int i=0; i<WARMUP_REPS; i++) {
+  for(int i=0; i<1; i++) {
     kernel_correlation_serial(data, corr, mean, stddev);
   }
   // timing
   TIMEIT({
     kernel_correlation_serial(data, corr, mean, stddev);
-  }, 3, "\n", "serial");
+  }, 1, "\n", "serial");
 }

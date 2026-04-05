@@ -7,3 +7,6 @@ externals/
 # build
 bin/
 obj/
+
+# tmp
+logs/

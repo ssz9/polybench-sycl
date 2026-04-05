@@ -18,10 +18,10 @@ void gemm_serial(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C)
 
 void bench_gemm_serial(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C)
 {
-  for (int i = 0; i < WARMUP_REPS; i++)
+  for (int i = 0; i < 1; i++)
     kernel_gemm_serial(A, B, C);
 
   TIMEIT({
     kernel_gemm_serial(A, B, C);
-  }, BENCH_REPS, "\n", "serial");
+  }, 1, "\n", "serial");
 }

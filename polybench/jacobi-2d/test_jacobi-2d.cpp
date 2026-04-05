@@ -11,6 +11,10 @@ extern void jacobi_2d_serial(DATA_TYPE *A, DATA_TYPE *B);
 extern void bench_jacobi_2d_serial(DATA_TYPE *A, DATA_TYPE *B);
 extern void jacobi_2d_sycl(DATA_TYPE *A, DATA_TYPE *B);
 extern void bench_jacobi_2d_sycl(DATA_TYPE *A, DATA_TYPE *B);
+#ifdef PLF_SW
+extern void jacobi_2d_sycl_sw(DATA_TYPE *A, DATA_TYPE *B);
+extern void bench_jacobi_2d_sycl_sw(DATA_TYPE *A, DATA_TYPE *B);
+#endif
 #ifdef PLF_A10
 extern void jacobi_2d_sycl_a10(DATA_TYPE *A, DATA_TYPE *B);
 extern void bench_jacobi_2d_sycl_a10(DATA_TYPE *A, DATA_TYPE *B);
@@ -34,6 +38,17 @@ bool check_jacobi_2d()
   bool b_ok = compare_array(B_gold, B, size);
   std::printf("compare A (sycl-naive): %s\n", a_ok ? "PASS" : "FAIL");
   std::printf("compare B (sycl-naive): %s\n", b_ok ? "PASS" : "FAIL");
+
+#ifdef PLF_SW
+  init_array(A, B);
+  jacobi_2d_sycl_sw(A, B);
+  bool a_sw_ok = compare_array(A_gold, A, size);
+  bool b_sw_ok = compare_array(B_gold, B, size);
+  std::printf("compare A (sycl-sw): %s\n", a_sw_ok ? "PASS" : "FAIL");
+  std::printf("compare B (sycl-sw): %s\n", b_sw_ok ? "PASS" : "FAIL");
+  a_ok = a_ok && a_sw_ok;
+  b_ok = b_ok && b_sw_ok;
+#endif
 
 #ifdef PLF_A10
   init_array(A, B);
@@ -65,6 +80,10 @@ void bench_jacobi_2d()
 
   init_array(A, B);
   bench_jacobi_2d_sycl(A, B);
+#ifdef PLF_SW
+  init_array(A, B);
+  bench_jacobi_2d_sycl_sw(A, B);
+#endif
 #ifdef PLF_A10
   init_array(A, B);
   bench_jacobi_2d_sycl_a10(A, B);

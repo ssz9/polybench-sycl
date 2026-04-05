@@ -21,10 +21,10 @@ void jacobi_2d_serial(DATA_TYPE *A, DATA_TYPE *B)
 
 void bench_jacobi_2d_serial(DATA_TYPE *A, DATA_TYPE *B)
 {
-  for (int i = 0; i < WARMUP_REPS; i++)
+  for (int i = 0; i < 1; i++)
     kernel_jacobi_2d_serial(A, B);
 
   TIMEIT({
     kernel_jacobi_2d_serial(A, B);
-  }, BENCH_REPS, "\n", "serial");
+  }, 1, "\n", "serial");
 }

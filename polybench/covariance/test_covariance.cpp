@@ -11,6 +11,10 @@ extern void covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mea
 extern void bench_covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void covariance_sycl(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void bench_covariance_sycl(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+#ifdef PLF_SW
+extern void covariance_sycl_sw(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+extern void bench_covariance_sycl_sw(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+#endif
 #ifdef PLF_A10
 extern void covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void bench_covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
@@ -38,6 +42,19 @@ bool check_covariance()
   bool mean_ok = compare_array(mean_gold, mean, _PB_M);
   std::printf("compare symmat (sycl-naive): %s\n", symmat_ok ? "PASS" : "FAIL");
   std::printf("compare mean (%s): %s\n", "sycl-naive", mean_ok ? "PASS" : "FAIL");
+
+#ifdef PLF_SW
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  covariance_sycl_sw(data, symmat, mean);
+  bool symmat_sw_ok = compare_array(symmat_gold, symmat, _PB_M * _PB_M);
+  bool mean_sw_ok = compare_array(mean_gold, mean, _PB_M);
+  std::printf("compare symmat (sycl-sw): %s\n", symmat_sw_ok ? "PASS" : "FAIL");
+  std::printf("compare mean (%s): %s\n", "sycl-sw", mean_sw_ok ? "PASS" : "FAIL");
+  symmat_ok = symmat_ok && symmat_sw_ok;
+  mean_ok = mean_ok && mean_sw_ok;
+#endif
 
 #ifdef PLF_A10
   init_array(data);
@@ -76,6 +93,12 @@ void bench_covariance()
   memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
   memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
   bench_covariance_sycl(data, symmat, mean);
+#ifdef PLF_SW
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  bench_covariance_sycl_sw(data, symmat, mean);
+#endif
 #ifdef PLF_A10
   init_array(data);
   memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));

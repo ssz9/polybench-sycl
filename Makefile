@@ -1,19 +1,22 @@
 PLATFORM ?= A10
-REPODIR := /home/shenzitao/repos/polybench-sycl
-SYCLDIR := /home/shenzitao/sycl_workspace/llvm/build/install
-
-CC := $(SYCLDIR)/bin/clang
-CXX := $(SYCLDIR)/bin/clang++
+REPODIR ?= $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+SYCLDIR ?= $(HOME)/sycl_workspace/llvm/build/install
 
 VALID_PLATFORMS := CPU DCU SW MT3K A10
 PLATFORM_UPPER := $(shell printf '%s' '$(PLATFORM)' | tr '[:lower:]' '[:upper:]')
 PLATFORM_LOWER := $(shell printf '%s' '$(PLATFORM_UPPER)' | tr '[:upper:]' '[:lower:]')
-
 ifeq ($(filter $(PLATFORM_UPPER),$(VALID_PLATFORMS)),)
 $(error Unsupported PLATFORM '$(PLATFORM)'. Valid choices: $(VALID_PLATFORMS))
 endif
 
-COMMON_CXXFLAGS := -O3 -fsycl -fno-sycl-id-queries-fit-in-int -ffp-contract=off
+CC := $(SYCLDIR)/bin/clang
+CXX := $(SYCLDIR)/bin/clang++
+ifeq ($(PLATFORM_UPPER),SW)
+CC := $(HOME)/online/shenzt/swclcc/archives/5575c717571bb16ccf6799d6a9ae892ac15b9d5e/bin/swsycl
+CXX := $(HOME)/online/shenzt/swclcc/archives/5575c717571bb16ccf6799d6a9ae892ac15b9d5e/bin/swsycl
+endif
+
+COMMON_CXXFLAGS := -O3 -fsycl -ffp-contract=off
 PLATFORM_CXXFLAGS_CPU ?= -fsycl-targets=spir64_x86_64
 PLATFORM_CXXFLAGS_A10 ?= -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_86
 PLATFORM_CXXFLAGS_DCU ?=

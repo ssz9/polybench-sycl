@@ -21,11 +21,11 @@
 #endif
 
 #ifndef WARMUP_REPS
-#define WARMUP_REPS 1
+#define WARMUP_REPS 2
 #endif
 
 #ifndef BENCH_REPS
-#define BENCH_REPS 1
+#define BENCH_REPS 3
 #endif
 
 using namespace sycl;

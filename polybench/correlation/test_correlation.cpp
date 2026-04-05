@@ -44,6 +44,10 @@ extern void correlation_serial(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean
 extern void bench_correlation_serial(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
 extern void correlation_sycl(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
 extern void bench_correlation_sycl(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
+#ifdef PLF_SW
+extern void correlation_sycl_sw(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
+extern void bench_correlation_sycl_sw(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
+#endif
 #ifdef PLF_A10
 extern void correlation_sycl_a10(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
 extern void bench_correlation_sycl_a10(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
@@ -80,6 +84,21 @@ bool check_correlation()
   bool mean_ok = compare_array(mean_gold, mean, _PB_M); std::printf("compare mean (%s): %s\n", impl_label.c_str(), mean_ok ? "PASS" : "FAIL");
   bool stddev_ok = compare_array(stddev_gold, stddev, _PB_M); std::printf("compare stddev (%s): %s\n", impl_label.c_str(), stddev_ok ? "PASS" : "FAIL");
 
+#ifdef PLF_SW
+  impl_label = "sycl-sw";
+  init_array(data);
+  memset_zero(corr, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  memset_zero(stddev, _PB_M * sizeof(DATA_TYPE));
+  correlation_sycl_sw(data, corr, mean, stddev);
+  bool corr_sw_ok = compare_array(corr_gold, corr, _PB_M * _PB_M); std::printf("compare corr (%s): %s\n", impl_label.c_str(), corr_sw_ok ? "PASS" : "FAIL");
+  bool mean_sw_ok = compare_array(mean_gold, mean, _PB_M); std::printf("compare mean (%s): %s\n", impl_label.c_str(), mean_sw_ok ? "PASS" : "FAIL");
+  bool stddev_sw_ok = compare_array(stddev_gold, stddev, _PB_M); std::printf("compare stddev (%s): %s\n", impl_label.c_str(), stddev_sw_ok ? "PASS" : "FAIL");
+  corr_ok = corr_ok && corr_sw_ok;
+  mean_ok = mean_ok && mean_sw_ok;
+  stddev_ok = stddev_ok && stddev_sw_ok;
+#endif
+
 #ifdef PLF_A10
   impl_label = "sycl-a10";
   init_array(data);
@@ -114,6 +133,13 @@ void bench_correlation()
 
   bench_correlation_serial(data, corr, mean, stddev);
   bench_correlation_sycl(data, corr, mean, stddev);
+#ifdef PLF_SW
+  init_array(data);
+  memset_zero(corr, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  memset_zero(stddev, _PB_M * sizeof(DATA_TYPE));
+  bench_correlation_sycl_sw(data, corr, mean, stddev);
+#endif
 #ifdef PLF_A10
   bench_correlation_sycl_a10(data, corr, mean, stddev);
 #endif

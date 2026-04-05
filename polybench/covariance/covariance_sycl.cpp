@@ -8,7 +8,7 @@ void kernel_covariance_sycl(buffer<DATA_TYPE, 2> &data_buf, buffer<DATA_TYPE, 2>
   Q.submit([&](handler &h) {
     auto data = data_buf.get_access<access::mode::read>(h);
     auto mean = mean_buf.get_access<access::mode::write>(h);
-    h.parallel_for(range<1>(_PB_M), [=](id<1> j) {
+    h.parallel_for<class CovarianceMeanKernel>(range<1>(_PB_M), [=](id<1> j) {
       mean[j] = 0.0;
       for (int i = 0; i < _PB_N; i++)
         mean[j] += data[i][j];
@@ -19,7 +19,7 @@ void kernel_covariance_sycl(buffer<DATA_TYPE, 2> &data_buf, buffer<DATA_TYPE, 2>
   Q.submit([&](handler &h) {
     auto data = data_buf.get_access<access::mode::read_write>(h);
     auto mean = mean_buf.get_access<access::mode::read>(h);
-    h.parallel_for(range<2>(_PB_N, _PB_M), [=](id<2> idx) {
+    h.parallel_for<class CovarianceCenterKernel>(range<2>(_PB_N, _PB_M), [=](id<2> idx) {
       data[idx] -= mean[idx[1]];
     });
   }).wait();
@@ -27,7 +27,7 @@ void kernel_covariance_sycl(buffer<DATA_TYPE, 2> &data_buf, buffer<DATA_TYPE, 2>
   Q.submit([&](handler &h) {
     auto data = data_buf.get_access<access::mode::read>(h);
     auto symmat = symmat_buf.get_access<access::mode::write>(h);
-    h.parallel_for(range<2>(_PB_M, _PB_M), [=](id<2> idx) {
+    h.parallel_for<class CovarianceSymmatKernel>(range<2>(_PB_M, _PB_M), [=](id<2> idx) {
       int j1 = idx[0];
       int j2 = idx[1];
       if (j1 <= j2) {
