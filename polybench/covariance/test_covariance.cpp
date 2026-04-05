@@ -19,6 +19,10 @@ extern void bench_covariance_sycl_sw(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TY
 extern void covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void bench_covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 #endif
+#ifdef PLF_DCU
+extern void covariance_sycl_dcu(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+extern void bench_covariance_sycl_dcu(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+#endif
 
 bool check_covariance()
 {
@@ -69,6 +73,19 @@ bool check_covariance()
   symmat_ok = symmat_ok && symmat_a10_ok;
   mean_ok = mean_ok && mean_a10_ok;
 #endif
+#ifdef PLF_DCU
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  covariance_sycl_dcu(data, symmat, mean);
+
+  bool symmat_dcu_ok = compare_array(symmat_gold, symmat, _PB_M * _PB_M);
+  bool mean_dcu_ok = compare_array(mean_gold, mean, _PB_M);
+  std::printf("compare symmat (sycl-dcu): %s\n", symmat_dcu_ok ? "PASS" : "FAIL");
+  std::printf("compare mean (%s): %s\n", "sycl-dcu", mean_dcu_ok ? "PASS" : "FAIL");
+  symmat_ok = symmat_ok && symmat_dcu_ok;
+  mean_ok = mean_ok && mean_dcu_ok;
+#endif
 
   free(data);
   free(symmat_gold);
@@ -104,6 +121,12 @@ void bench_covariance()
   memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
   memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
   bench_covariance_sycl_a10(data, symmat, mean);
+#endif
+#ifdef PLF_DCU
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  bench_covariance_sycl_dcu(data, symmat, mean);
 #endif
 
   free(data);

@@ -22,6 +22,14 @@ extern void bench_fastwavesuv_sycl_sw(
     DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
     DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
 #endif
+#ifdef PLF_DCU
+extern void fastwavesuv_sycl_dcu(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
+    DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
+extern void bench_fastwavesuv_sycl_dcu(
+    DATA_TYPE *uout, DATA_TYPE *vout, DATA_TYPE *uin, DATA_TYPE *vin, DATA_TYPE *utens, DATA_TYPE *vtens, DATA_TYPE *wgtfac, DATA_TYPE *ppuv,
+    DATA_TYPE *hhl, DATA_TYPE *rho, DATA_TYPE *fx, DATA_TYPE *ppgk, DATA_TYPE *ppgc, DATA_TYPE *ppgu, DATA_TYPE *ppgv, DATA_TYPE edadlat, DATA_TYPE dt);
+#endif
 
 namespace {
 
@@ -123,6 +131,17 @@ bool check_fastwavesuv()
   u_ok = u_ok && u_sw_ok;
   v_ok = v_ok && v_sw_ok;
 #endif
+#ifdef PLF_DCU
+  init_fastwavesuv(out);
+  fastwavesuv_sycl_dcu(out.uout, out.vout, out.uin, out.vin, out.utens, out.vtens, out.wgtfac, out.ppuv, out.hhl, out.rho, out.fx, out.ppgk, out.ppgc,
+                       out.ppgu, out.ppgv, edadlat, dt);
+  bool u_dcu_ok = compare_array(gold.uout, out.uout, size_3d);
+  bool v_dcu_ok = compare_array(gold.vout, out.vout, size_3d);
+  std::printf("compare uout (sycl-dcu): %s\n", u_dcu_ok ? "PASS" : "FAIL");
+  std::printf("compare vout (sycl-dcu): %s\n", v_dcu_ok ? "PASS" : "FAIL");
+  u_ok = u_ok && u_dcu_ok;
+  v_ok = v_ok && v_dcu_ok;
+#endif
 
   free_data(gold);
   free_data(out);
@@ -146,6 +165,11 @@ void bench_fastwavesuv()
   init_fastwavesuv(d);
   bench_fastwavesuv_sycl_sw(d.uout, d.vout, d.uin, d.vin, d.utens, d.vtens, d.wgtfac, d.ppuv, d.hhl, d.rho, d.fx, d.ppgk, d.ppgc, d.ppgu, d.ppgv,
                             edadlat, dt);
+#endif
+#ifdef PLF_DCU
+  init_fastwavesuv(d);
+  bench_fastwavesuv_sycl_dcu(d.uout, d.vout, d.uin, d.vin, d.utens, d.vtens, d.wgtfac, d.ppuv, d.hhl, d.rho, d.fx, d.ppgk, d.ppgc, d.ppgu, d.ppgv,
+                             edadlat, dt);
 #endif
 
   free_data(d);

@@ -20,6 +20,10 @@ extern void bench_heat_3d_sycl_sw(DATA_TYPE *A, DATA_TYPE *B);
 extern void heat_3d_sycl_a10(DATA_TYPE *A, DATA_TYPE *B);
 extern void bench_heat_3d_sycl_a10(DATA_TYPE *A, DATA_TYPE *B);
 #endif
+#ifdef PLF_DCU
+extern void heat_3d_sycl_dcu(DATA_TYPE *A, DATA_TYPE *B);
+extern void bench_heat_3d_sycl_dcu(DATA_TYPE *A, DATA_TYPE *B);
+#endif
 
 bool check_heat_3d()
 {
@@ -62,6 +66,17 @@ bool check_heat_3d()
   a_ok = a_ok && a_a10_ok;
   b_ok = b_ok && b_a10_ok;
 #endif
+#ifdef PLF_DCU
+  init_array(A, B);
+  heat_3d_sycl_dcu(A, B);
+
+  bool a_dcu_ok = compare_array(A_gold, A, size);
+  bool b_dcu_ok = compare_array(B_gold, B, size);
+  std::printf("compare A (sycl-dcu): %s\n", a_dcu_ok ? "PASS" : "FAIL");
+  std::printf("compare B (sycl-dcu): %s\n", b_dcu_ok ? "PASS" : "FAIL");
+  a_ok = a_ok && a_dcu_ok;
+  b_ok = b_ok && b_dcu_ok;
+#endif
 
   free(A_gold);
   free(B_gold);
@@ -88,6 +103,10 @@ void bench_heat_3d()
 #ifdef PLF_A10
   init_array(A, B);
   bench_heat_3d_sycl_a10(A, B);
+#endif
+#ifdef PLF_DCU
+  init_array(A, B);
+  bench_heat_3d_sycl_dcu(A, B);
 #endif
 
   free(A);

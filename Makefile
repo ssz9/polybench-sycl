@@ -1,6 +1,6 @@
 PLATFORM ?= A10
 REPODIR ?= $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-SYCLDIR ?= $(HOME)/sycl_workspace/llvm/build/install
+SYCLDIR ?= $(HOME)/sycl_workspace/llvm/build
 
 VALID_PLATFORMS := CPU DCU SW MT3K A10
 PLATFORM_UPPER := $(shell printf '%s' '$(PLATFORM)' | tr '[:lower:]' '[:upper:]')
@@ -15,11 +15,16 @@ ifeq ($(PLATFORM_UPPER),SW)
 CC := $(HOME)/online/shenzt/swclcc/archives/5575c717571bb16ccf6799d6a9ae892ac15b9d5e/bin/swsycl
 CXX := $(HOME)/online/shenzt/swclcc/archives/5575c717571bb16ccf6799d6a9ae892ac15b9d5e/bin/swsycl
 endif
+ifeq ($(PLATFORM), DCU)
+GCCHOME := $(shell spack find --paths gcc | grep -o '/[^ ]*/gcc-11.5.0[^ ]*')
+CC += --gcc-toolchain=${GCCHOME}
+CXX += --gcc-toolchain=${GCCHOME}
+endif
 
 COMMON_CXXFLAGS := -O3 -fsycl -ffp-contract=off
 PLATFORM_CXXFLAGS_CPU ?= -fsycl-targets=spir64_x86_64
 PLATFORM_CXXFLAGS_A10 ?= -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_86
-PLATFORM_CXXFLAGS_DCU ?=
+PLATFORM_CXXFLAGS_DCU ?= -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=gfx906
 PLATFORM_CXXFLAGS_SW ?=
 PLATFORM_CXXFLAGS_MT3K ?=
 

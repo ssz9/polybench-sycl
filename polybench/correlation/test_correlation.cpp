@@ -52,6 +52,10 @@ extern void bench_correlation_sycl_sw(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYP
 extern void correlation_sycl_a10(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
 extern void bench_correlation_sycl_a10(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
 #endif
+#ifdef PLF_DCU
+extern void correlation_sycl_dcu(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
+extern void bench_correlation_sycl_dcu(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev);
+#endif
 
 bool check_correlation()
 {
@@ -113,6 +117,20 @@ bool check_correlation()
   mean_ok = mean_ok && mean_a10_ok;
   stddev_ok = stddev_ok && stddev_a10_ok;
 #endif
+#ifdef PLF_DCU
+  impl_label = "sycl-dcu";
+  init_array(data);
+  memset_zero(corr, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  memset_zero(stddev, _PB_M * sizeof(DATA_TYPE));
+  correlation_sycl_dcu(data, corr, mean, stddev);
+  bool corr_dcu_ok = compare_array(corr_gold, corr, _PB_M * _PB_M); std::printf("compare corr (%s): %s\n", impl_label.c_str(), corr_dcu_ok ? "PASS" : "FAIL");
+  bool mean_dcu_ok = compare_array(mean_gold, mean, _PB_M); std::printf("compare mean (%s): %s\n", impl_label.c_str(), mean_dcu_ok ? "PASS" : "FAIL");
+  bool stddev_dcu_ok = compare_array(stddev_gold, stddev, _PB_M); std::printf("compare stddev (%s): %s\n", impl_label.c_str(), stddev_dcu_ok ? "PASS" : "FAIL");
+  corr_ok = corr_ok && corr_dcu_ok;
+  mean_ok = mean_ok && mean_dcu_ok;
+  stddev_ok = stddev_ok && stddev_dcu_ok;
+#endif
 
   free(data);
   free(corr);
@@ -142,6 +160,9 @@ void bench_correlation()
 #endif
 #ifdef PLF_A10
   bench_correlation_sycl_a10(data, corr, mean, stddev);
+#endif
+#ifdef PLF_DCU
+  bench_correlation_sycl_dcu(data, corr, mean, stddev);
 #endif
 
   free(data);

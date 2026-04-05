@@ -22,6 +22,10 @@ extern void bench_gemm_sycl_sw(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C);
 extern void gemm_sycl_a10(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C);
 extern void bench_gemm_sycl_a10(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C);
 #endif
+#ifdef PLF_DCU
+extern void gemm_sycl_dcu(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C);
+extern void bench_gemm_sycl_dcu(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C);
+#endif
 
 bool check_gemm()
 {
@@ -48,6 +52,7 @@ bool check_gemm()
 #endif
 
   bool c_a10_ok = true;
+  bool c_dcu_ok = true;
 #ifdef PLF_A10
   init_array(A, B, C);
   gemm_sycl_a10(A, B, C);
@@ -55,12 +60,19 @@ bool check_gemm()
   c_a10_ok = compare_array(C_gold, C, MATRIX_SIZE * MATRIX_SIZE);
   std::printf("compare C (sycl-a10): %s\n", c_a10_ok ? "PASS" : "FAIL");
 #endif
+#ifdef PLF_DCU
+  init_array(A, B, C);
+  gemm_sycl_dcu(A, B, C);
+
+  c_dcu_ok = compare_array(C_gold, C, MATRIX_SIZE * MATRIX_SIZE);
+  std::printf("compare C (sycl-dcu): %s\n", c_dcu_ok ? "PASS" : "FAIL");
+#endif
 
   free(A);
   free(B);
   free(C_gold);
   free(C);
-  return c_ok && c_a10_ok;
+  return c_ok && c_a10_ok && c_dcu_ok;
 }
 
 void bench_gemm()
@@ -83,6 +95,10 @@ void bench_gemm()
 #ifdef PLF_A10
   init_array(A, B, C);
   bench_gemm_sycl_a10(A, B, C);
+#endif
+#ifdef PLF_DCU
+  init_array(A, B, C);
+  bench_gemm_sycl_dcu(A, B, C);
 #endif
 
   free(A);
