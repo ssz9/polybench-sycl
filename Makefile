@@ -31,8 +31,13 @@ $(OBJDIR_PLF)/%.o: polybench/*/%.cpp
 	@mkdir -p $(OBJDIR_PLF)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
 
+$(OBJDIR_PLF)/%.o: open-earth-benchmarks/*/%.cpp
+	@mkdir -p $(OBJDIR_PLF)
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
+
 define BENCH_OBJS
-$(patsubst polybench/$(1)/%.cpp,$(OBJDIR_PLF)/%.o,$(wildcard polybench/$(1)/$(1)_sycl_$(PLATFORM_LOWER)*.cpp))
+$(patsubst polybench/$(1)/%.cpp,$(OBJDIR_PLF)/%.o,$(wildcard polybench/$(1)/$(1)_sycl_$(PLATFORM_LOWER)*.cpp)) \
+$(patsubst open-earth-benchmarks/$(1)/%.cpp,$(OBJDIR_PLF)/%.o,$(wildcard open-earth-benchmarks/$(1)/$(1)_sycl_$(PLATFORM_LOWER)*.cpp))
 endef
 .SECONDEXPANSION:
 $(BINDIR)/test_%: $(OBJDIR_PLF)/test_%.o $(OBJDIR_PLF)/%_serial.o $(OBJDIR_PLF)/%_sycl.o $$(call BENCH_OBJS,$$*)
@@ -42,12 +47,17 @@ $(BINDIR)/test_%: $(OBJDIR_PLF)/test_%.o $(OBJDIR_PLF)/%_serial.o $(OBJDIR_PLF)/
 
 .PHONY: all clean
 
+# polybench
 ALL_TESTS := \
 	$(BINDIR)/test_correlation \
 	$(BINDIR)/test_covariance \
 	$(BINDIR)/test_gemm \
 	$(BINDIR)/test_heat-3d \
 	$(BINDIR)/test_jacobi-2d
+# open-earth-benchmarks
+ALL_TESTS += \
+	$(BINDIR)/test_fastwavesuv \
+	$(BINDIR)/test_hadvuv
 all: $(ALL_TESTS)
 
 clean:

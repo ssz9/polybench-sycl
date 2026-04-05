@@ -11,6 +11,10 @@ extern void covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mea
 extern void bench_covariance_serial(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void covariance_sycl(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
 extern void bench_covariance_sycl(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+#ifdef PLF_A10
+extern void covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+extern void bench_covariance_sycl_a10(DATA_TYPE *data, DATA_TYPE *symmat, DATA_TYPE *mean);
+#endif
 
 bool check_covariance()
 {
@@ -35,6 +39,20 @@ bool check_covariance()
   std::printf("compare symmat (sycl-naive): %s\n", symmat_ok ? "PASS" : "FAIL");
   std::printf("compare mean (%s): %s\n", "sycl-naive", mean_ok ? "PASS" : "FAIL");
 
+#ifdef PLF_A10
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  covariance_sycl_a10(data, symmat, mean);
+
+  bool symmat_a10_ok = compare_array(symmat_gold, symmat, _PB_M * _PB_M);
+  bool mean_a10_ok = compare_array(mean_gold, mean, _PB_M);
+  std::printf("compare symmat (sycl-a10): %s\n", symmat_a10_ok ? "PASS" : "FAIL");
+  std::printf("compare mean (%s): %s\n", "sycl-a10", mean_a10_ok ? "PASS" : "FAIL");
+  symmat_ok = symmat_ok && symmat_a10_ok;
+  mean_ok = mean_ok && mean_a10_ok;
+#endif
+
   free(data);
   free(symmat_gold);
   free(mean_gold);
@@ -58,6 +76,12 @@ void bench_covariance()
   memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
   memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
   bench_covariance_sycl(data, symmat, mean);
+#ifdef PLF_A10
+  init_array(data);
+  memset_zero(symmat, _PB_M * _PB_M * sizeof(DATA_TYPE));
+  memset_zero(mean, _PB_M * sizeof(DATA_TYPE));
+  bench_covariance_sycl_a10(data, symmat, mean);
+#endif
 
   free(data);
   free(symmat);
