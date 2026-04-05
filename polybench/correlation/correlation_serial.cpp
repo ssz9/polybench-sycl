@@ -1,5 +1,5 @@
 
-#include "header.h"
+#include "correlation.h"
 
 void kernel_correlation_serial(DATA_TYPE *data, DATA_TYPE *corr, DATA_TYPE *mean, DATA_TYPE *stddev)
 {

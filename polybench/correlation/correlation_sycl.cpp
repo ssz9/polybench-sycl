@@ -1,4 +1,4 @@
-#include "header.h"
+#include "correlation.h"
 
 
 void kernel_correlation_sycl(buffer<DATA_TYPE,2> &data_buf, buffer<DATA_TYPE,2> &corr_buf, buffer<DATA_TYPE,1> &mean_buf, buffer<DATA_TYPE,1> &stddev_buf, queue &Q)

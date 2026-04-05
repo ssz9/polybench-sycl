@@ -1,4 +1,4 @@
-#include "header.h"
+#include "correlation.h"
 
 
 void init_array(DATA_TYPE *data)

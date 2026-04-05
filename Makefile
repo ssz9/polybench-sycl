@@ -1,51 +1,54 @@
-PLATFORM = CUDA
-REPODIR=/home/shenzitao/repos/polybench-sycl
-SYCLDIR=/home/shenzitao/sycl_workspace/llvm/build/install
+PLATFORM ?= A10
+REPODIR := /home/shenzitao/repos/polybench-sycl
+SYCLDIR := /home/shenzitao/sycl_workspace/llvm/build/install
 
-CC = ${SYCLDIR}/bin/clang
-CXX= ${SYCLDIR}/bin/clang++
+CC := $(SYCLDIR)/bin/clang
+CXX := $(SYCLDIR)/bin/clang++
 
-# CXXFLAGS = -O3 -fsycl -fno-sycl-id-queries-fit-in-int -fsycl-targets=spir64_x86_64 		 		# for x86
-CXXFLAGS = -O3 -fsycl -fno-sycl-id-queries-fit-in-int -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda  -Xsycl-target-backend=nvptx64-nvidia-cuda '-O3 --cuda-gpu-arch=sm_70'
+VALID_PLATFORMS := CPU DCU SW MT3K A10
+PLATFORM_UPPER := $(shell printf '%s' '$(PLATFORM)' | tr '[:lower:]' '[:upper:]')
+PLATFORM_LOWER := $(shell printf '%s' '$(PLATFORM_UPPER)' | tr '[:upper:]' '[:lower:]')
 
-CXXFLAGS += -ffp-contract=off # don't allow fp optimization e.g., FMA instr generation
+ifeq ($(filter $(PLATFORM_UPPER),$(VALID_PLATFORMS)),)
+$(error Unsupported PLATFORM '$(PLATFORM)'. Valid choices: $(VALID_PLATFORMS))
+endif
 
-CXXDEFS=
-CXXFLAGS+= $(CXXDEFS) 
+COMMON_CXXFLAGS := -O3 -fsycl -fno-sycl-id-queries-fit-in-int -ffp-contract=off
+PLATFORM_CXXFLAGS_CPU ?= -fsycl-targets=spir64_x86_64
+PLATFORM_CXXFLAGS_A10 ?= -fsycl-targets=spir64_x86_64,nvptx64-nvidia-cuda -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_86
+PLATFORM_CXXFLAGS_DCU ?=
+PLATFORM_CXXFLAGS_SW ?=
+PLATFORM_CXXFLAGS_MT3K ?=
 
-BINDIR = bin
-OBJDIR = obj
-INCLUDES = -I${REPODIR}/include
+CXXFLAGS := $(COMMON_CXXFLAGS) $(PLATFORM_CXXFLAGS_$(PLATFORM_UPPER))
+CPPFLAGS := -I$(REPODIR)/include -DPLF_$(PLATFORM_UPPER)
 
-# polybench ======================================================================================================================================
-${OBJDIR}/%_serial.o: polybench/*/%_serial.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
-${OBJDIR}/%_sycl.o: polybench/*/%_sycl.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
-${OBJDIR}/%_sycl_sw.o: polybench/*/%_sycl_sw.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
-${OBJDIR}/%_sycl_dcu.o: polybench/*/%_sycl_dcu.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
-${OBJDIR}/%_sycl_mt3k.o: polybench/*/%_sycl_mt3k.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
-${OBJDIR}/%_hip.o: polybench/*/%_hip.cpp
-	echo "Not supported yet"
-${OBJDIR}/%_athread.o: polybench/*/%_athread.cpp
-	echo "Not supported yet"
-${OBJDIR}/%_hthread.o: polybench/*/%_hthread.cpp
-	echo "Not supported yet"
-${OBJDIR}/test_%.o: polybench/*/test_%.cpp                                
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
+BINDIR := bin
+OBJDIR := obj
+OBJDIR_PLF := $(OBJDIR)/$(PLATFORM_LOWER)
 
-${BINDIR}/test_%: ${OBJDIR}/test_%.o ${OBJDIR}/%_serial.o ${OBJDIR}/%_sycl.o #${OBJDIR}/%_sycl_sw.o ${OBJDIR}/%_sycl_dcu.o ${OBJDIR}/%_sycl_mt3k.o
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^
+$(OBJDIR_PLF)/%.o: polybench/*/%.cpp
+	@mkdir -p $(OBJDIR_PLF)
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
 
-# open-earth-benchmarks ==========================================================================================================================
+define BENCH_OBJS
+$(patsubst polybench/$(1)/%.cpp,$(OBJDIR_PLF)/%.o,$(wildcard polybench/$(1)/$(1)_sycl_$(PLATFORM_LOWER)*.cpp))
+endef
+.SECONDEXPANSION:
+$(BINDIR)/test_%: $(OBJDIR_PLF)/test_%.o $(OBJDIR_PLF)/%_serial.o $(OBJDIR_PLF)/%_sycl.o $$(call BENCH_OBJS,$$*)
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^
 
-mkdir:
-	mkdir -p $(BINDIR) $(OBJDIR)
-.PHONY : mkdir
+
+.PHONY: all clean
+
+ALL_TESTS := \
+	$(BINDIR)/test_correlation \
+	$(BINDIR)/test_covariance \
+	$(BINDIR)/test_gemm \
+	$(BINDIR)/test_heat-3d \
+	$(BINDIR)/test_jacobi-2d
+all: $(ALL_TESTS)
 
 clean:
-	rm -rf ./$(BINDIR)/* ./$(OBJDIR)/*
-.PHONY : clean
+	rm -rf $(BINDIR)/* $(OBJDIR)/*
