@@ -1,0 +1,9 @@
+externals/
+
+# vscode
+.vscode/
+.codex
+
+# build
+bin/
+obj/
